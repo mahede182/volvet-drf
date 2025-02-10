@@ -1,9 +1,21 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model, authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 User = get_user_model()
 
+@swagger_auto_schema(
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={
+            'id': openapi.Schema(type=openapi.TYPE_INTEGER, read_only=True),
+            'username': openapi.Schema(type=openapi.TYPE_STRING),
+            'email': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_EMAIL),
+        }
+    )
+)
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User

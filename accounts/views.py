@@ -8,6 +8,9 @@ from .serializers import (
     UserSerializer, UserRegistrationSerializer,
     LoginSerializer, PasswordChangeSerializer
 )
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
+
 User = get_user_model()
 
 
@@ -18,6 +21,31 @@ class UserViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return User.objects.filter(id=self.request.user.id)
 
+    @swagger_auto_schema(
+        operation_description="User login endpoint",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['username', 'password'],
+            properties={
+                'username': openapi.Schema(type=openapi.TYPE_STRING),
+                'password': openapi.Schema(type=openapi.TYPE_STRING),
+            },
+        ),
+        responses={
+            200: openapi.Response(
+                description="Successful login",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'user': openapi.Schema(type=openapi.TYPE_OBJECT),
+                        'access': openapi.Schema(type=openapi.TYPE_STRING),
+                        'refresh': openapi.Schema(type=openapi.TYPE_STRING),
+                    }
+                )
+            ),
+            400: "Invalid credentials"
+        }
+    )
     @action(detail=False, methods=['post'], permission_classes=[AllowAny])
     def login(self, request):
         serializer = LoginSerializer(data=request.data, context={'request': request})
@@ -30,6 +58,34 @@ class UserViewSet(viewsets.ModelViewSet):
             'access': str(tokens.access_token),
             'refresh': str(tokens)
         })
+
+    @swagger_auto_schema(
+        operation_description="User registration endpoint",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['username', 'email', 'password', 'password2'],
+            properties={
+                'username': openapi.Schema(type=openapi.TYPE_STRING),
+                'email': openapi.Schema(type=openapi.TYPE_STRING, format=openapi.FORMAT_EMAIL),
+                'password': openapi.Schema(type=openapi.TYPE_STRING),
+                'password2': openapi.Schema(type=openapi.TYPE_STRING),
+            },
+        ),
+        responses={
+            201: openapi.Response(
+                description="User created successfully",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'user': openapi.Schema(type=openapi.TYPE_OBJECT),
+                        'access': openapi.Schema(type=openapi.TYPE_STRING),
+                        'refresh': openapi.Schema(type=openapi.TYPE_STRING),
+                    }
+                )
+            ),
+            400: "Validation error"
+        }
+    )
     @action(detail=False, methods=['post'], permission_classes=[AllowAny])
     def register(self, request):
         serializer = UserRegistrationSerializer(data=request.data)
